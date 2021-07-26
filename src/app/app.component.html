@@ -1,0 +1,66 @@
+<mat-card>
+  <mat-form-field
+    class="field-wrapper business-display-field"
+    appearance="legacy"
+  >
+    <mat-label>Business Display Name</mat-label>
+    <input matInput />
+  </mat-form-field>
+  <mat-form-field
+    class="field-wrapper business-category-field"
+    appearance="legacy"
+  >
+    <mat-label>Buisness Category</mat-label>
+    <mat-select disableOptionCentering panelClass="business-category-select">
+      <mat-option
+        *ngFor="let businessCategory of businessCategories"
+        [value]="businessCategory.id"
+      >
+        <div class="options">
+          <span class="short-desc">{{ businessCategory.shortDesc }}</span>
+          <span class="desc">{{ businessCategory.description }}</span>
+        </div>
+      </mat-option>
+    </mat-select>
+  </mat-form-field>
+  <mat-form-field class="field-wrapper" appearance="legacy">
+    <mat-label>Business tags (5 maximum)</mat-label>
+    <input type="text" aria-label="Number" matInput [matAutocomplete]="auto" />
+    <mat-autocomplete
+      #auto="matAutocomplete"
+      (optionSelected)="onSelect($event.option.value)"
+    >
+      <mat-option *ngFor="let option of businessTags" [value]="option">
+        {{ option }}
+      </mat-option>
+    </mat-autocomplete>
+  </mat-form-field>
+  <mat-chip-list>
+    <mat-chip
+      *ngFor="let selectedBusinessTag of selectedBusinessTags"
+      [removable]="true"
+      (removed)="removeTag(selectedBusinessTag)">
+      {{ selectedBusinessTag }}
+      <mat-icon matChipRemove>cancel</mat-icon>
+    </mat-chip>
+  </mat-chip-list>
+  <mat-form-field class="field-wrapper webiste-field" appearance="legacy">
+    <mat-label>Website</mat-label>
+    <input matInput />
+  </mat-form-field>
+  <div class="field-wrapper description-field">
+    <div class="label-group">
+      <mat-label>Description</mat-label>
+      <span class="hint-text">300</span>
+    </div>
+    <textarea
+      class="description-text-area"
+      placeholder="Eg: Placeholder text goes here"
+      matInput
+      maxlength="300"
+    ></textarea>
+  </div>
+  <button class="save-button" mat-raised-button mat-button color="warn">
+    Save
+  </button>
+</mat-card>

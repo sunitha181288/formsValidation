@@ -1,0 +1,34 @@
+/* You can add global styles to this file, and also import other style files */
+
+html,
+body {
+  height: 100%;
+}
+body {
+  margin: 0;
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+}
+
+.business-category-select {
+  margin-top: 30px;
+  margin-left: 15px;
+  mat-option {
+    height: auto !important;
+    background: transparent !important;
+    border-bottom: 1px solid #ccc;
+    .mat-option-text {
+      .options {
+        display: flex;
+        flex-direction: column;
+
+        padding: 16px;
+        .short-desc {
+          font-weight: bold;
+        }
+        .desc {
+          line-height: 15px;
+        }
+      }
+    }
+  }
+}
