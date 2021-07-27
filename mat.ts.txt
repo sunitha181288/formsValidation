@@ -1,0 +1,121 @@
+<mat-form-field class="example-chip-list">
+  <mat-chip-list #chipList>
+    <mat-chip
+      *ngFor="let fruit of fruits"
+      [selectable]="selectable"
+      [removable]="removable"
+      (removed)="remove(fruit)">
+      {{fruit}}
+      <mat-icon matChipRemove *ngIf="removable">cancel</mat-icon>
+    </mat-chip>
+    <input
+      placeholder="New fruit..."
+      #fruitInput
+      [formControl]="fruitCtrl"
+      [matAutocomplete]="auto"
+      [matChipInputFor]="chipList"
+      [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
+      [matChipInputAddOnBlur]="addOnBlur"
+      (matChipInputTokenEnd)="add($event)">
+  </mat-chip-list>
+  <mat-autocomplete #auto="matAutocomplete" (optionSelected)="selected($event)">
+    <mat-option *ngFor="let fruit of filteredFruits | async" [value]="fruit">
+      {{fruit.name}}
+    </mat-option>
+  </mat-autocomplete>
+</mat-form-field>
+
+import { COMMA, ENTER } from "@angular/cdk/keycodes";
+import { Component, ElementRef, ViewChild } from "@angular/core";
+import { FormControl } from "@angular/forms";
+import {
+  MatAutocompleteSelectedEvent,
+  MatChipInputEvent
+} from "@angular/material";
+import { Observable, of } from "rxjs";
+import { map, startWith } from "rxjs/operators";
+
+/**
+ * @title Basic chips
+ */
+@Component({
+  selector: "chips-overview-example",
+  templateUrl: "chips-overview-example.html",
+  styleUrls: ["chips-overview-example.css"]
+})
+export class ChipsOverviewExample {
+  visible = true;
+  selectable = true;
+  removable = true;
+  addOnBlur = false;
+  separatorKeysCodes: number[] = [ENTER, COMMA];
+  fruitCtrl = new FormControl();
+  filteredFruits: Observable<string[]>;
+  fruits: string[] = [];
+  allFruits: any[] = [
+    { id: 1, name: "Apple" },
+    {
+      id: 2,
+      name: "Orange"
+    },
+    {
+      id: 3,
+      name: "Banana"
+    },
+    {
+      id: 4,
+      name: "Malta"
+    }
+  ];
+
+  @ViewChild("fruitInput") fruitInput: ElementRef;
+
+  constructor() {
+    this.fruitCtrl.valueChanges.subscribe(search => {
+      this.filteredFruits = of(this.allFruits.filter(item =>
+        item.name.toLowerCase().includes(search)
+      ));
+    });
+  }
+
+  add(event: MatChipInputEvent): void {
+    const input = event.input;
+    const value = event.value;
+
+    // Add our fruit
+    if ((value || "").trim()) {
+      this.fruits.push(value.trim());
+    }
+
+    // Reset the input value
+    if (input) {
+      input.value = "";
+    }
+
+    this.fruitCtrl.setValue(null);
+  }
+
+  remove(fruit: string): void {
+    const index = this.fruits.indexOf(fruit);
+
+    if (index >= 0) {
+      this.fruits.splice(index, 1);
+    }
+  }
+
+  selected(event: MatAutocompleteSelectedEvent): void {
+    this.fruits.push(event.option.viewValue);
+    this.fruitInput.nativeElement.value = "";
+    this.fruitCtrl.setValue(null);
+  }
+
+  private _filter(value: string): string[] {
+    const filterValue = value.toLowerCase();
+
+    return this.allFruits.filter(
+      fruit => fruit.toLowerCase().indexOf(filterValue) === 0
+    );
+  }
+}
+
+
