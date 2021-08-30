@@ -15,7 +15,11 @@ mat-card {
     ::ng-deep .mat-form-field.mat-warn .mat-input-element, .mat-form-field-invalid .mat-input-element{
       caret-color: black;
     }
-    .field-wrapper {
+    ::ng-deep app-chip-field {
+      display: grid;
+      width: 100%;
+    }
+    ::ng-deep .field-wrapper {
       width: 25%;
 
       ::ng-deep.mat-form-field-ripple {

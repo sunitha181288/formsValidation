@@ -1,5 +1,7 @@
 import { Component } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { debounceTime, distinctUntilChanged, startWith, map } from 'rxjs/operators';
+import { HttpClient } from '@angular/common/http';
 
 @Component({
   selector: 'app-root',
@@ -7,10 +9,9 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
   styleUrls: ['./app.component.scss']
 })
 export class AppComponent {
-  title = 'tutor-app';
-  businessTags: string[] = ['Canteen', 'Cafe', 'Charity', 'Pastery', 'Fruits', 'Bevarges'];
+  AUTO_COMPLETE_PAGE_LIMIT: number = 10;
+  autocompletePageCount: number = 0;
   selectedBusinessTags: string[] = [];
-  selectedCategory: any;
   businessCategories = [{
     id: 1,
     description: 'Arcades, karkoke, photography',
@@ -28,6 +29,11 @@ export class AppComponent {
   }];
   registerForm: FormGroup = new FormGroup({});
   submitted: boolean = false;
+  businessTags: string[] = [];
+  filtertedBusinessTags: string[] = [];
+  currentIndex: number = -1;
+  completedPercentage: number = 0;
+  completedItems: string[] = [];
 
   get registerFormControls() { return this.registerForm.controls; }
 
@@ -35,31 +41,85 @@ export class AppComponent {
     return this.registerForm.get('description')?.value;
   }
 
+  get selectedCategory() {
+    return this.registerForm.get('businessCategory')?.value;
+  }
+
   get descriptionTextLen() {
     return this.descriptionText?.length > 0 ? (300 - this.descriptionText?.length) : 300;
   }
 
-  constructor(private formBuilder: FormBuilder) { }
+  constructor(private formBuilder: FormBuilder, private httpClient: HttpClient) { }
 
   ngOnInit() {
     this.registerForm = this.formBuilder.group({
       businessName: ['', Validators.required],
       businessCategory: [''],
-      businessTags: [''],
+      businessTag: [''],
+      businessTags: [[]],
       website: ['', [Validators.pattern('')]],
       description: ['', [Validators.maxLength(300)]],
     });
+    Object.keys(this.registerForm.value).forEach((field) => {
+      this.registerForm.controls[field].valueChanges
+      .subscribe((value) => {
+        if(value != "") {
+          if(!this.completedItems.includes(field)){
+            this.completedPercentage += 20;
+            this.completedItems.push(field);
+          }
+        } else {
+          this.completedPercentage += -20;
+          this.completedItems.splice(this.completedItems.indexOf(field), 1);
+        }
+      });
+    });
+    this.registerForm.controls['businessTag'].valueChanges
+      .pipe(
+        debounceTime(500),
+        distinctUntilChanged(),
+        startWith(''))
+      .subscribe(value => {
+        if (value != null && value !== "") {
+          this._filter(value);
+          // call API to fetch autocomplete tags
+        } else {
+          // empty string
+          this.filtertedBusinessTags = this.businessTags;
+        }
+      });
   }
 
-  onSelect(value: any) {
-    const isExist = this.selectedBusinessTags.find((tag) => tag.toLowerCase() === value.toLowerCase());
-    if (!isExist) {
-      this.selectedBusinessTags.push(value);
+  private _filter(value: string) {
+    const filterValue = value.toLowerCase();
+    this.filtertedBusinessTags = this.businessTags.filter(tag => tag.toLowerCase().includes(filterValue));
+  }
+
+  onSelect(tag: any) {
+    const input = tag.input;
+    const value = tag.value;
+    const isLimitExceed = this.selectedBusinessTags?.length > 4; // to check tags length
+    if ((value || "").trim() && !this.selectedBusinessTags.includes(value)) {
+      const trimvalue = value.trim();
+      this.selectedBusinessTags.push(trimvalue);
+    }
+    if (input) {
+      input.value = "";
+    }
+    this.registerForm.get('businessTag')?.setValue(null);
+    if (isLimitExceed) {
+      this.registerForm.get('businessTags')?.setErrors({ maxlength: true })
     }
   }
 
-  removeTag(tag: string) {
-    this.selectedBusinessTags.splice(this.selectedBusinessTags.indexOf(tag), 1);
+  onRemoveTag(tag: string) {
+    const index = this.selectedBusinessTags.indexOf(tag);
+    if (index >= 0) {
+      this.selectedBusinessTags.splice(index, 1);
+      if (this.registerForm.get('businessTags')?.errors?.maxlength) {
+        this.registerForm.get('businessTags')?.setErrors(null);
+      }
+    }
   }
 
   onSubmit() {
@@ -68,5 +128,26 @@ export class AppComponent {
     if (this.registerForm.invalid) {
       return;
     }
+  }
+
+  onScrollChange(index: number) {
+    if (index > this.currentIndex) {
+      this.currentIndex = index;
+      this.fetchBusinessTags();
+    }
+  }
+
+  fetchBusinessTags() {
+    const pageLimit = this.AUTO_COMPLETE_PAGE_LIMIT;
+    const pageCount = this.autocompletePageCount;
+    this.httpClient.get('assets/stub.json').pipe(map((data: any) => {
+      const result = data.slice(pageCount, (pageCount + pageLimit));
+      this.autocompletePageCount += pageLimit;
+      // after results fetched, increment the page count
+      return result;
+    })).subscribe((response) => {
+      this.businessTags = this.businessTags.concat(response);
+      this.filtertedBusinessTags = this.businessTags;
+    });
   }
 }

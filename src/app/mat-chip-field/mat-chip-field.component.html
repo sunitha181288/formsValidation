@@ -1,0 +1,48 @@
+<mat-form-field
+  [formGroup]="formGroup"
+  class="field-wrapper"
+  appearance="legacy"
+>
+  <mat-label>Business tags (5 maximum)</mat-label>
+  <input
+    type="text"
+    aria-label="Buisness Tag"
+    matInput
+    [matAutocomplete]="auto"
+    formControlName="businessTag"
+  />
+  <mat-autocomplete
+    #auto="matAutocomplete"
+    (optionSelected)="onSelect($event.option)"
+  >
+  <cdk-virtual-scroll-viewport (scrolledIndexChange)="nextBatch($event)" appendOnly itemSize="50" minBufferPx="200" maxBufferPx="400" class="autocomplete-viewport">
+    <mat-option class="item" *cdkVirtualFor="let option of businessTags;  let i = index; trackBy: trackByIdx" [value]="option">
+      {{ option }}
+    </mat-option>
+    <mat-option class="suggestion-option" *ngIf="!businessTags?.length">
+      <div class="suggestion-text-wrapper">
+        <div class="text-msg">No Matching keyword found.</div>
+        <div class="text-msg">
+          <span>Can't find your keyword? </span>
+          <span class="bold" (click)="onSelectSuggest()">Make a suggestion</span>
+        </div>
+      </div>
+    </mat-option>
+  </cdk-virtual-scroll-viewport>
+  </mat-autocomplete>
+</mat-form-field>
+<ng-content></ng-content>
+<mat-form-field *ngIf="showSuggestedInput" class="field-wrapper suggestion-field" appearance="legacy">
+  <mat-label>Keyword suggestion</mat-label>
+  <input matInput (keydown.enter)="applyKeyword($event)" maxlength="60"  />
+</mat-form-field>
+<mat-chip-list>
+  <mat-chip
+    *ngFor="let selectedBusinessTag of selectedBusinessTags"
+    [removable]="true"
+    (removed)="onRemoveTag(selectedBusinessTag)"
+  >
+    {{ selectedBusinessTag }}
+    <mat-icon matChipRemove>cancel</mat-icon>
+  </mat-chip>
+</mat-chip-list>

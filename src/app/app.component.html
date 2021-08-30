@@ -7,7 +7,11 @@
       <mat-label>Business Display Name</mat-label>
       <input formControlName="businessName" type="text" matInput />
       <mat-hint
-        *ngIf="registerFormControls.businessName.invalid && (registerFormControls.businessName.dirty || registerFormControls.businessName.touched)"
+        *ngIf="
+          registerFormControls.businessName.invalid &&
+          (registerFormControls.businessName.dirty ||
+            registerFormControls.businessName.touched)
+        "
         class="invalid"
       >
         <div *ngIf="registerFormControls.businessName.errors?.required">
@@ -20,10 +24,17 @@
       appearance="legacy"
     >
       <mat-label>Buisness Category</mat-label>
-      <mat-select disableOptionCentering panelClass="business-category-select">
+      <mat-select
+        formControlName="businessCategory"
+        disableOptionCentering
+        panelClass="business-category-select"
+      >
+        <mat-select-trigger>
+          {{ selectedCategory }}
+        </mat-select-trigger>
         <mat-option
           *ngFor="let businessCategory of businessCategories"
-          [value]="businessCategory.id"
+          [value]="businessCategory.shortDesc"
         >
           <div class="options">
             <span class="short-desc">{{ businessCategory.shortDesc }}</span>
@@ -32,44 +43,38 @@
         </mat-option>
       </mat-select>
     </mat-form-field>
-    <mat-form-field class="field-wrapper" appearance="legacy">
-      <mat-label>Business tags (5 maximum)</mat-label>
-      <input
-        type="text"
-        aria-label="Number"
-        matInput
-        [matAutocomplete]="auto"
-      />
-      <mat-autocomplete
-        #auto="matAutocomplete"
-        (optionSelected)="onSelect($event.option.value)"
+    <app-chip-field
+      [formGroup]="registerForm"
+      (scrollChange)="onScrollChange($event)"
+      [selectedBusinessTags]="selectedBusinessTags"
+      [businessTags]="filtertedBusinessTags"
+      (selectTag)="onSelect($event)"
+      (removeTag)="onRemoveTag($event)"
+    >
+      <mat-hint
+        *ngIf="
+          registerFormControls.businessTags.invalid &&
+          (registerFormControls.businessTag.dirty ||
+            registerFormControls.businessTag.touched)
+        "
+        class="invalid"
       >
-        <mat-option *ngFor="let option of businessTags" [value]="option">
-          {{ option }}
-        </mat-option>
-      </mat-autocomplete>
-    </mat-form-field>
-    <mat-chip-list>
-      <mat-chip
-        *ngFor="let selectedBusinessTag of selectedBusinessTags"
-        [removable]="true"
-        (removed)="removeTag(selectedBusinessTag)"
-      >
-        {{ selectedBusinessTag }}
-        <mat-icon matChipRemove>cancel</mat-icon>
-      </mat-chip>
-    </mat-chip-list>
+        <div *ngIf="registerFormControls.businessTags.errors?.maxlength">
+          Max of 5 Business Tags are allowed
+        </div>
+      </mat-hint>
+    </app-chip-field>
     <mat-form-field class="field-wrapper webiste-field" appearance="legacy">
       <mat-label>Website</mat-label>
-      <input matInput />
+      <input formControlName="website" matInput />
     </mat-form-field>
     <div class="field-wrapper description-field">
       <div class="label-group">
         <mat-label>Description</mat-label>
-        <span class="hint-text">{{descriptionTextLen}}</span>
+        <span class="hint-text">{{ descriptionTextLen }}</span>
       </div>
       <textarea
-        formControlName="description" 
+        formControlName="description"
         class="description-text-area"
         placeholder="Eg: Placeholder text goes here"
         matInput
@@ -87,4 +92,11 @@
       Save
     </button>
   </form>
+  <mat-progress-bar
+    mode="determinate"
+    [value]="completedPercentage"
+  ></mat-progress-bar>
+  <button mat-fab color="primary" aria-label="Example icon button with a delete icon">
+    <mat-icon>delete</mat-icon>
+  </button>
 </mat-card>
