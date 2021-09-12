@@ -44,7 +44,7 @@ export class ChipFieldComponent implements OnInit {
     this.removeTag.emit(tag);
   }
 
-  nextBatch(event: any){
+  nextBatch(event: any) {
     this.scrollChange.emit(event);
   }
 
